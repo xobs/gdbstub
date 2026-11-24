@@ -24,10 +24,10 @@ impl Target for DummyTarget {
         target::ext::base::BaseOps::MultiThread(self)
     }
 
-    // disable `QStartNoAckMode` in order to save space
+    // NAK demo: no-ack mode on, as GDB negotiates it with any stub that offers it.
     #[inline(always)]
     fn use_no_ack_mode(&self) -> bool {
-        false
+        true
     }
 
     // disable X packet optimization in order to save space
@@ -94,11 +94,17 @@ impl MultiThreadBase for DummyTarget {
     #[inline(never)]
     fn read_addrs(
         &mut self,
-        _start_addr: u32,
+        start_addr: u32,
         data: &mut [u8],
         _tid: Tid, // same address space for each core
     ) -> TargetResult<usize, Self> {
         print_str("> read_addrs");
+        // NAK demo: a read from 0xdead0000 takes 3 s, longer than GDB's default
+        // 2 s `remotetimeout`, standing in for slow target I/O.
+        if start_addr == 0xdead_0000 {
+            print_str("> read_addrs: slow read, sleeping 3 s");
+            unsafe { libc::sleep(3) };
+        }
         data.iter_mut().for_each(|b| *b = 0x55);
         Ok(data.len())
     }

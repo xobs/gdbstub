@@ -79,7 +79,9 @@ fn rust_main() -> Result<(), i32> {
             if e.is_target_error() {
                 print_str("Target raised a fatal error");
             } else {
-                print_str("gdbstub internal error");
+                // NAK demo: say which internal error ended the session.
+                use core::fmt::Write;
+                let _ = writeln!(crate::print_str::Stdout, "gdbstub internal error: {}", e);
             }
         }
     }
